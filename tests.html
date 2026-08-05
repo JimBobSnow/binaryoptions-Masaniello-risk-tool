@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Masaniello engine — test suite</title>
+<style>
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#0b0f14; color:#dfe7ee; padding:2rem; }
+  h1 { font-size: 1.1rem; }
+  .pass { color: #4ade80; }
+  .fail { color: #f87171; }
+  .case { padding: 0.5rem 0; border-bottom: 1px solid #1e2833; }
+  .summary { margin-top: 1.5rem; font-weight: bold; font-size: 1.1rem; }
+  code { color: #93c5fd; }
+</style>
+</head>
+<body>
+<h1>Masaniello staking engine — validation suite (spec section 3.5)</h1>
+<div id="results"></div>
+<div id="summary" class="summary"></div>
+
+<script src="masaniello.js"></script>
+<script>
+(function () {
+  const results = [];
+  let passCount = 0;
+
+  function approx(a, b, eps) {
+    return Math.abs(a - b) <= (eps === undefined ? 0.005 : eps);
+  }
+
+  function check(name, actual, expected, eps) {
+    const ok = approx(actual, expected, eps);
+    if (ok) passCount++;
+    results.push({ name, ok, actual, expected });
+  }
+
+  // --- Worked example from the spec: N=3, K=1, payout=100%, bankroll=$100 ---
+  (function workedExample() {
+    const N = 3, K = 1, qAvg = 1.0, C0 = 100;
+    const t = Masaniello.buildTable(N, qAvg);
+
+    let capital = C0, tradesRemaining = N, winsNeeded = K;
+
+    // Trade 1
+    let stake1 = Masaniello.nextStake(capital, tradesRemaining, winsNeeded, qAvg, t, 'pure');
+    check('Trade 1 stake ≈ $14.29', stake1, 14.29, 0.01);
+
+    // Trade 1 loses -> capital 85.71
+    capital = capital - stake1;
+    tradesRemaining -= 1; // winsNeeded unchanged (loss)
+    check('Capital after loss 1 ≈ $85.71', capital, 85.71, 0.01);
+
+    // Trade 2
+    let stake2 = Masaniello.nextStake(capital, tradesRemaining, winsNeeded, qAvg, t, 'pure');
+    check('Trade 2 stake ≈ $28.57', stake2, 28.57, 0.01);
+
+    // Trade 2 loses -> capital 57.14
+    capital = capital - stake2;
+    tradesRemaining -= 1;
+    check('Capital after loss 2 ≈ $57.14', capital, 57.14, 0.01);
+
+    // Trade 3 - must-win-all-remaining (n===k diagonal), pure mode -> 100% of capital
+    let stake3 = Masaniello.nextStake(capital, tradesRemaining, winsNeeded, qAvg, t, 'pure');
+    check('Trade 3 stake = 100% of remaining ($57.14)', stake3, 57.14, 0.01);
+
+    // A single win, whenever it lands, produces the same final capital ~114.28/114.29
+    const finalIfWinTrade1 = C0 - Masaniello.nextStake(C0, N, K, qAvg, t, 'pure') + Masaniello.nextStake(C0, N, K, qAvg, t, 'pure') * (1 + qAvg);
+    check('Win-on-trade-1 final capital ≈ $114.29', finalIfWinTrade1, 114.29, 0.02);
+
+    const finalIfWinTrade3 = capital - stake3 + stake3 * (1 + qAvg);
+    check('Win-on-trade-3 (last) final capital ≈ $114.28', finalIfWinTrade3, 114.28, 0.02);
+  })();
+
+  // --- q_next differs from q_avg on the very first trade ---
+  (function qNextDiffersFromQAvg() {
+    const N = 3, K = 1, qAvg = 0.80, C0 = 100;
+    const t = Masaniello.buildTable(N, qAvg);
+
+    const qNext = 0.92; // broker actually offering 92% on trade 1
+    const stakeWithQNext = Masaniello.nextStake(C0, N, K, qNext, t, 'pure');
+    const stakeWithQAvg = Masaniello.nextStake(C0, N, K, qAvg, t, 'pure');
+
+    check('Stake with q_next=0.92 differs from stake with q_avg=0.80', stakeWithQNext === stakeWithQAvg ? 0 : 1, 1, 0);
+
+    const returnIfWin = stakeWithQNext * qNext;
+    const wrongReturnIfWin = stakeWithQNext * qAvg;
+    check('Return on win uses q_next, not q_avg (values differ)', returnIfWin === wrongReturnIfWin ? 0 : 1, 1, 0);
+
+    // Sanity: stake fraction formula directly
+    const Aq = t[N - 1][K - 1];
+    const Bq = t[N - 1][K];
+    const expectedFraction = (Bq - Aq) / (Aq * qNext + Bq);
+    check('stakeFraction(N,K,q_next) matches manual formula using table built on q_avg', Masaniello.stakeFraction(N, K, qNext, t, 'pure'), expectedFraction, 1e-9);
+  })();
+
+  // --- Target already met: k=0 means stop staking ---
+  (function targetMet() {
+    const t = Masaniello.buildTable(5, 0.8);
+    check('stakeFraction returns 0 once k=0 (target met)', Masaniello.stakeFraction(3, 0, 0.8, t, 'pure'), 0, 0);
+  })();
+
+  // --- Diagonal case: pure vs capped mode ---
+  (function diagonalModes() {
+    const t = Masaniello.buildTable(4, 0.8);
+    check('Pure mode diagonal (n=k) stakes 100%', Masaniello.stakeFraction(2, 2, 0.8, t, 'pure'), 1, 0);
+    check('Capped mode diagonal (n=k) respects 50% cap', Masaniello.stakeFraction(2, 2, 0.8, t, 'capped', 50), 0.5, 0);
+    check('Capped mode diagonal respects 100% cap == pure', Masaniello.stakeFraction(2, 2, 0.8, t, 'capped', 100), 1, 0);
+  })();
+
+  // --- Additional (N,K,payout) combinations for cross-checking ---
+  (function additionalCombos() {
+    // N=5,K=3,payout=80%: table should be internally consistent —
+    // a win at any point in the tree should reach the same t[5][3]-based target
+    // when re-normalized. We check invariants instead of external reference values.
+    const N = 5, K = 3, qAvg = 0.80;
+    const t = Masaniello.buildTable(N, qAvg);
+    // Base cases
+    check('t[n][0] = 1 for all n', t[5][0] + t[3][0] + t[0][0], 3, 0);
+    check('t[m][m] = (1+q)^m diagonal (m=2)', t[2][2], Math.pow(1.8, 2), 1e-9);
+    check('t[m][m] = (1+q)^m diagonal (m=5)', t[5][5], Math.pow(1.8, 5), 1e-9);
+
+    // Invariant: starting capital * t[N][K] should equal capital-after-a-win * t[N-1][K-1]
+    // when the stake for that win was sized by stakeFraction(N,K,qAvg,...).
+    const C0 = 250;
+    const stake = Masaniello.nextStake(C0, N, K, qAvg, t, 'pure');
+    const capitalAfterWin = C0 - stake + stake * (1 + qAvg);
+    const projectedFromStart = C0 * t[N][K];
+    const projectedAfterWin = capitalAfterWin * t[N - 1][K - 1];
+    check('Projected final capital is invariant after a win (N=5,K=3,q=0.8)', projectedAfterWin, projectedFromStart, 0.01);
+
+    const capitalAfterLoss = C0 - stake;
+    const projectedAfterLoss = capitalAfterLoss * t[N - 1][K];
+    check('Projected final capital is invariant after a loss (N=5,K=3,q=0.8)', projectedAfterLoss, projectedFromStart, 0.01);
+  })();
+
+  // --- Take-profit / stop-loss threshold amount: percent vs dollar, and
+  // the dollar "amount" vs "ceiling"/"floor" mode distinction (bug report:
+  // a $1 stop-loss was ending sessions with $55+ still remaining because
+  // "amount" mode measures cumulative loss from bankroll, not the balance
+  // itself — "floor" mode is the fix for users who want the latter). ---
+  (function thresholdAmountModes() {
+    const C0 = 100;
+
+    check('Percent TP: 20% of $100 bankroll = $20', Masaniello.thresholdAmount(C0, { type: 'percent', value: 20 }), 20, 0);
+    check('Percent SL: 30% of $100 bankroll = $30', Masaniello.thresholdAmount(C0, { type: 'percent', value: 30 }), 30, 0);
+
+    // Default/legacy dollar mode (no dollarMode field, or 'amount'): the
+    // value IS the threshold, regardless of bankroll size.
+    check('Dollar SL, no dollarMode (legacy): threshold = raw value', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 1 }), 1, 0);
+    check('Dollar SL, amount mode: threshold = raw value', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 1, dollarMode: 'amount' }), 1, 0);
+    check('Dollar TP, amount mode: threshold = raw value', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 20, dollarMode: 'amount' }), 20, 0);
+
+    // Bug-report scenario: SL "$1" in floor mode with $100 bankroll means
+    // "stop once balance drops to $1" -> allowed loss is $99, so losing down
+    // to $55 remaining should NOT be treated as having crossed a $1 threshold.
+    const slFloorThreshold = Masaniello.thresholdAmount(C0, { type: 'dollar', value: 1, dollarMode: 'floor' });
+    check('Dollar SL, floor mode: $1 floor on $100 bankroll allows $99 of loss', slFloorThreshold, 99, 0);
+    const lossSoFarAt55Remaining = C0 - 55;
+    check('At $55 remaining, floor-mode SL of $1 has NOT triggered yet (45 < 99)', lossSoFarAt55Remaining < slFloorThreshold ? 1 : 0, 1, 0);
+
+    // Same $1 value in amount mode DOES trigger almost immediately, which is
+    // the behavior that was surprising the user.
+    const slAmountThreshold = Masaniello.thresholdAmount(C0, { type: 'dollar', value: 1, dollarMode: 'amount' });
+    check('At $55 remaining, amount-mode SL of $1 HAS triggered (45 >= 1)', lossSoFarAt55Remaining >= slAmountThreshold ? 1 : 0, 1, 0);
+
+    // TP ceiling mode: target balance of $150 on a $100 bankroll needs $50 of profit.
+    check('Dollar TP, ceiling mode: $150 target balance on $100 bankroll needs $50 profit', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 150, dollarMode: 'ceiling' }), 50, 0);
+
+    // Floor/ceiling values that have already been passed clamp to 0, not negative.
+    check('Floor mode clamps to 0 when floor value exceeds bankroll', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 200, dollarMode: 'floor' }), 0, 0);
+    check('Ceiling mode clamps to 0 when ceiling value is below bankroll', Masaniello.thresholdAmount(C0, { type: 'dollar', value: 50, dollarMode: 'ceiling' }), 0, 0);
+  })();
+
+  // --- computeMaxTrades: how many trades can a bankroll fund at a target
+  // win rate before trade 1's stake would fall below the $1 broker minimum?
+  // Hand-derived for $100 bankroll, 20% win rate, 100% payout, pure mode:
+  // K stays at 1 (round(0.2*n) = 1 for n=3..7), and trade-1 stake follows
+  // f(n) = 2*f(n-1)/(1+f(n-1)) with f(1)=2, giving stake(6) = 100/63 ≈ $1.587
+  // (still >= $1) and stake(7) = 100/127 ≈ $0.787 (< $1) — so max n = 6. ---
+  (function maxTradesCalc() {
+    const r6 = Masaniello.computeMaxTrades(100, 20, 100, 'pure', null);
+    check('computeMaxTrades($100, 20% win rate, 100% payout): max trades = 6', r6.n, 6, 0);
+    check('computeMaxTrades(...): wins needed at n=6 stays 1', r6.k, 1, 0);
+
+    // Bankroll below the $1 minimum can't fund even one trade.
+    const rTooSmall = Masaniello.computeMaxTrades(0.5, 60, 80, 'pure', null);
+    check('computeMaxTrades(bankroll < $1 minimum) -> 0 trades', rTooSmall.n, 0, 0);
+
+    // A 100% win rate is diagonal (must-win-all) for every n, so trade 1 is
+    // always the full bankroll regardless of n -> the scan never finds a
+    // violation and hits the search cap, which the caller can detect.
+    const r100 = Masaniello.computeMaxTrades(100, 100, 80, 'pure', null, 1, 10);
+    check('computeMaxTrades(100% win rate) hits the search cap (capped flag set)', r100.cappedAtSearchLimit ? 1 : 0, 1, 0);
+    check('computeMaxTrades(100% win rate) reports n = search cap', r100.n, 10, 0);
+
+    // Invalid inputs (bankroll/winRate/payout <= 0) return a safe zero result.
+    const rInvalid = Masaniello.computeMaxTrades(100, 0, 80, 'pure', null);
+    check('computeMaxTrades(0% win rate) -> 0 trades, not a crash', rInvalid.n, 0, 0);
+  })();
+
+  // --- Render results ---
+  const container = document.getElementById('results');
+  results.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'case';
+    div.innerHTML = (r.ok ? '<span class="pass">PASS</span> ' : '<span class="fail">FAIL</span> ') +
+      r.name + ' — got <code>' + (typeof r.actual === 'number' ? r.actual.toFixed(4) : r.actual) +
+      '</code>, expected <code>' + (typeof r.expected === 'number' ? r.expected.toFixed(4) : r.expected) + '</code>';
+    container.appendChild(div);
+  });
+
+  const summary = document.getElementById('summary');
+  summary.textContent = passCount + ' / ' + results.length + ' passed';
+  summary.className = 'summary ' + (passCount === results.length ? 'pass' : 'fail');
+  window.__TEST_RESULTS__ = { passCount, total: results.length, results };
+})();
+</script>
+</body>
+</html>

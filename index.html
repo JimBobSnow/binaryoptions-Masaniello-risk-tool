@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Masaniello Risk Manager</title>
+<script>
+  (function () {
+    var VALID = { ledger: 1, terminal: 1, gauge: 1 };
+    var theme = 'terminal';
+    try {
+      var stored = localStorage.getItem('masaniello_theme_v1');
+      if (stored && VALID[stored]) theme = stored;
+    } catch (e) {}
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <h1>Masaniello Risk Manager</h1>
+    <div class="tagline">Position-sizing calculator for binary options, using the Masaniello staking method. 100% local — nothing ever leaves your browser.</div>
+    <div class="theme-switcher" role="group" aria-label="Visual theme">
+      <button type="button" class="theme-btn" data-theme-choice="ledger">Theme 1</button>
+      <button type="button" class="theme-btn" data-theme-choice="terminal">Theme 2</button>
+      <button type="button" class="theme-btn" data-theme-choice="gauge">Theme 3</button>
+    </div>
+    <span class="disclaimer-link" id="disclaimerLink">Read the risk disclaimer</span>
+  </header>
+
+  <!-- ===================== SETUP PANEL ===================== -->
+  <section class="card" id="setupPanel">
+    <h2>Start a new session</h2>
+    <div class="error-box hidden" id="setupError"></div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="bankrollInput">Starting balance ($)</label>
+        <input type="number" id="bankrollInput" value="100" min="0" step="0.01" />
+      </div>
+      <div class="field">
+        <label for="winRateInput">Target win rate (%)</label>
+        <input type="number" id="winRateInput" value="60" min="0.01" max="100" step="0.1" />
+        <span class="hint">How often you expect to win this session.</span>
+      </div>
+      <div class="field">
+        <label for="avgPayoutInput">Default / average payout %</label>
+        <input type="number" id="avgPayoutInput" value="80" min="0" step="0.01" />
+        <span class="hint">Used to build the projection table. Each trade's actual payout is editable during the session.</span>
+      </div>
+    </div>
+
+    <div class="computed-plan" id="computedPlan">
+      <div class="field">
+        <label for="tradeCountSelect">Number of trades this session</label>
+        <select id="tradeCountSelect"></select>
+        <span class="hint">Every choice offered here keeps trade 1's stake at or above the $1 minimum, up to a cap of 20 trades.</span>
+      </div>
+      <div class="computed-plan-row">
+        <div class="computed-plan-item">
+          <div class="label">Wins needed</div>
+          <div class="value" id="computedWins">—</div>
+        </div>
+        <div class="computed-plan-item">
+          <div class="label">Effective win rate</div>
+          <div class="value" id="computedWinRate">—</div>
+        </div>
+        <div class="computed-plan-item">
+          <div class="label">Projected growth if successful</div>
+          <div class="value" id="computedGrowth">—</div>
+        </div>
+      </div>
+      <div class="note" id="computedPlanNote">Set your balance and target win rate above to see how many trades you can choose from.</div>
+    </div>
+
+    <div class="field-grid" style="margin-top:1rem;">
+      <div class="field">
+        <label id="tpValueLabel">Take-Profit (% of balance)</label>
+        <div class="tp-sl-row">
+          <div class="toggle-group">
+            <button type="button" id="tpTypePercentBtn" class="active">%</button>
+            <button type="button" id="tpTypeDollarBtn">$</button>
+          </div>
+          <input type="number" id="tpValueInput" value="20" min="0" step="0.01" />
+        </div>
+        <div class="field hidden" id="tpDollarModeField" style="margin-top:0.5rem;">
+          <div class="toggle-group wide">
+            <button type="button" id="tpModeAmountBtn" class="active">Amount to gain</button>
+            <button type="button" id="tpModeCeilingBtn">Balance ceiling</button>
+          </div>
+          <span class="hint" id="tpDollarModeHint"></span>
+        </div>
+        <div class="toggle-group wide" style="margin-top:0.5rem;">
+          <button type="button" id="tpForceEndYesBtn" class="active">Ends session when hit</button>
+          <button type="button" id="tpForceEndNoBtn">Alert only</button>
+        </div>
+      </div>
+      <div class="field">
+        <label id="slValueLabel">Stop-Loss (% of balance)</label>
+        <div class="tp-sl-row">
+          <div class="toggle-group">
+            <button type="button" id="slTypePercentBtn" class="active">%</button>
+            <button type="button" id="slTypeDollarBtn">$</button>
+          </div>
+          <input type="number" id="slValueInput" value="30" min="0" step="0.01" />
+        </div>
+        <div class="field hidden" id="slDollarModeField" style="margin-top:0.5rem;">
+          <div class="toggle-group wide">
+            <button type="button" id="slModeAmountBtn" class="active">Amount you can lose</button>
+            <button type="button" id="slModeFloorBtn">Balance floor</button>
+          </div>
+          <span class="hint" id="slDollarModeHint"></span>
+        </div>
+        <div class="toggle-group wide" style="margin-top:0.5rem;">
+          <button type="button" id="slForceEndYesBtn" class="active">Ends session when hit</button>
+          <button type="button" id="slForceEndNoBtn">Alert only</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="diagonalModeSelect">Must-win-all endgame mode</label>
+        <select id="diagonalModeSelect">
+          <option value="pure" selected>Pure (stake 100% when only a win keeps target alive)</option>
+          <option value="capped">Capped (cap the stake, treat a loss as session end)</option>
+        </select>
+      </div>
+      <div class="field hidden" id="maxStakePercentField">
+        <label for="maxStakePercentInput">Max stake % (capped mode)</label>
+        <input type="number" id="maxStakePercentInput" value="50" min="1" max="100" step="1" />
+      </div>
+    </div>
+
+    <div style="margin-top:1.25rem;">
+      <button class="btn btn-primary" id="startSessionBtn">Start Session</button>
+    </div>
+  </section>
+
+  <!-- ===================== ACTIVE / ENDED DASHBOARD ===================== -->
+  <section class="card hidden" id="dashboardPanel">
+    <div class="end-banner hidden" id="endBanner"></div>
+    <div class="error-box hidden" id="endgameWarning"></div>
+
+    <span class="session-status hidden" id="sessionStatus">Session Active</span>
+
+    <div class="stat-row">
+      <div class="stat"><div class="label">Current Capital</div><div class="value" id="statCurrentCapital">$0.00</div></div>
+      <div class="stat"><div class="label">Starting Capital</div><div class="value" id="statStartingCapital">$0.00</div></div>
+      <div class="stat"><div class="label">Net P/L</div><div class="value" id="statNetPL">$0.00</div></div>
+      <div class="stat"><div class="label">Trades</div><div class="value" id="statTrades" style="font-size:1rem;">0 / 0</div></div>
+      <div class="stat"><div class="label">Wins</div><div class="value" id="statWins" style="font-size:1rem;">0 / 0</div></div>
+    </div>
+
+    <div class="projection-box">
+      <div class="estimate-label">Projected outcome if the plan finishes exactly on target</div>
+      <div class="proj-row">
+        <div class="proj-item"><div class="value" id="projFinalCapital">$0.00</div><div class="label">Final capital</div></div>
+        <div class="proj-item"><div class="value" id="projProfit">$0.00</div><div class="label">Projected profit</div></div>
+        <div class="proj-item"><div class="value" id="projGainPercent">0%</div><div class="label">Account gain</div></div>
+      </div>
+      <div class="note" id="projNote"></div>
+    </div>
+
+    <div class="stake-panel">
+      <div class="field">
+        <label for="qNextInput">Payout % for this trade</label>
+        <input type="number" id="qNextInput" min="0" step="0.01" />
+        <span class="hint">Set this to what your broker is actually offering on <em>this</em> trade before you record a result — binary options payouts change trade to trade, and this is the number your stake and balance are calculated from.</span>
+      </div>
+      <div class="suggested-stake">
+        <div class="label">Suggested next stake</div>
+        <div class="value" id="suggestedStakeValue">$0.00</div>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-item">
+        <div class="progress-label" id="tpProgressLabel"><span>Take-Profit</span><span>$0 / $0</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill tp" id="tpProgressFill" style="width:0%;"></div></div>
+        <svg class="progress-ring" viewBox="0 0 84 84" width="84" height="84">
+          <circle class="ring-track" cx="42" cy="42" r="34" fill="none" stroke-width="8" />
+          <circle class="ring-fill tp" id="tpRingFill" cx="42" cy="42" r="34" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 213.63" transform="rotate(-90 42 42)" />
+          <line x1="42" y1="6" x2="42" y2="14" class="ring-tick" />
+          <line x1="78" y1="42" x2="70" y2="42" class="ring-tick" />
+          <line x1="42" y1="78" x2="42" y2="70" class="ring-tick" />
+          <line x1="6" y1="42" x2="14" y2="42" class="ring-tick" />
+        </svg>
+        <span class="hit-note hidden" id="tpHitNote">Reached — auto-end is off, session continuing</span>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label" id="slProgressLabel"><span>Stop-Loss</span><span>$0 / $0</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill sl" id="slProgressFill" style="width:0%;"></div></div>
+        <svg class="progress-ring" viewBox="0 0 84 84" width="84" height="84">
+          <circle class="ring-track" cx="42" cy="42" r="34" fill="none" stroke-width="8" />
+          <circle class="ring-fill sl" id="slRingFill" cx="42" cy="42" r="34" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 213.63" transform="rotate(-90 42 42)" />
+          <line x1="42" y1="6" x2="42" y2="14" class="ring-tick" />
+          <line x1="78" y1="42" x2="70" y2="42" class="ring-tick" />
+          <line x1="42" y1="78" x2="42" y2="70" class="ring-tick" />
+          <line x1="6" y1="42" x2="14" y2="42" class="ring-tick" />
+        </svg>
+        <span class="hit-note hidden" id="slHitNote">Reached — auto-end is off, session continuing</span>
+      </div>
+    </div>
+
+    <div class="error-box hidden" id="dashboardError"></div>
+
+    <div class="actions-row">
+      <div class="stake-used-field">
+        <label for="stakeUsedInput">Actual stake used (editable for slippage)</label>
+        <input type="number" id="stakeUsedInput" min="0" step="0.01" />
+      </div>
+      <button class="btn btn-win" id="winBtn">Win</button>
+      <button class="btn btn-loss" id="lossBtn">Loss</button>
+    </div>
+
+    <h3>This session's trade log</h3>
+    <div style="overflow-x:auto;">
+      <table class="log-table">
+        <thead>
+          <tr><th>No.</th><th>Payout %</th><th>Result</th><th>Trade Amount</th><th>Return</th><th>Running Balance</th></tr>
+        </thead>
+        <tbody id="tradeLogBody"></tbody>
+      </table>
+    </div>
+
+    <div class="actions-row" style="margin-top:1.25rem;margin-bottom:0;">
+      <button class="btn btn-danger" id="endSessionBtn">End Session Manually</button>
+      <button class="btn btn-primary hidden" id="startNewSessionBtn">Start New Session</button>
+    </div>
+  </section>
+
+  <!-- ===================== SESSION HISTORY ===================== -->
+  <section class="card">
+    <h2>Session History</h2>
+
+    <div class="counter-widget">
+      <div>
+        <div class="big-number" id="counterBigNumber">0</div>
+        <div class="hint">Sessions counter</div>
+      </div>
+      <div class="counter-side">
+        <div class="counter-controls">
+          <button class="btn btn-small" id="counterMinusBtn">−</button>
+          <button class="btn btn-small" id="counterPlusBtn">+</button>
+          <button class="btn btn-small" id="counterResetBtn">Reset</button>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoCountToggle" checked />
+          Auto-count on session end
+        </label>
+      </div>
+    </div>
+
+    <div class="history-totals">
+      <div class="stat"><div class="label">Sessions Completed</div><div class="value" id="totalSessions">0</div></div>
+      <div class="stat"><div class="label">Win Sessions</div><div class="value" id="totalWinSessions">0</div></div>
+      <div class="stat"><div class="label">Loss Sessions</div><div class="value" id="totalLossSessions">0</div></div>
+      <div class="stat"><div class="label">Cumulative Net P/L</div><div class="value" id="totalCumulativePL">$0.00</div></div>
+    </div>
+
+    <h3>Archived sessions</h3>
+    <div id="sessionHistoryList"></div>
+  </section>
+
+  <footer class="app-footer">
+    <div>
+      Binary options trading carries a high risk of loss. This tool is a position-sizing calculator based on the
+      Masaniello method — it does not predict outcomes, guarantee profit, or constitute financial advice. All data
+      stays in your browser only.
+    </div>
+    <div>
+      <button class="btn btn-danger" id="clearAllDataBtn">Clear all my data</button>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Disclaimer modal -->
+<div class="modal-backdrop hidden" id="disclaimerModal">
+  <div class="modal">
+    <h3>Risk Disclaimer</h3>
+    <p>
+      Binary options trading carries a high risk of loss and is not suitable for every investor. The Masaniello method
+      implemented here is a position-sizing / stake-management calculator only — it does not predict trade outcomes,
+      does not guarantee profit, and is not financial or investment advice.
+    </p>
+    <p>
+      This tool runs entirely in your browser. No account, trade, or session data is ever sent to a server; everything
+      is stored locally via your browser's <code>localStorage</code> and is only ever visible to you, on this device,
+      in this browser.
+    </p>
+    <p>
+      The "projected final capital" shown during a session is an estimate that assumes your chosen average payout %
+      continues on every remaining trade at exactly the suggested stake. Real payouts vary trade to trade, so actual
+      results can and will differ.
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="disclaimerCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="masaniello.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
