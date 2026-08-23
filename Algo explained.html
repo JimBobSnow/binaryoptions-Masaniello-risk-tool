@@ -1,0 +1,1169 @@
+<title>The Masaniello Method</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef1ee;
+    --surface: #ffffff;
+    --surface-2: #f7f9f6;
+    --ink: #171b18;
+    --ink-muted: #545f57;
+    --ink-faint: #7c877e;
+    --line: #d7dcd6;
+    --line-soft: #e4e8e2;
+    --accent: #1b6f63;
+    --accent-strong: #124f46;
+    --accent-soft: #e4efec;
+    --win: #2f7a54;
+    --win-soft: #e5f2ea;
+    --loss: #9c3b2e;
+    --loss-soft: #f5e7e4;
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141812;
+      --surface: #1b211c;
+      --surface-2: #1f261f;
+      --ink: #e9ece6;
+      --ink-muted: #a3ada2;
+      --ink-faint: #7d867c;
+      --line: #2c342d;
+      --line-soft: #232b24;
+      --accent: #5cc4ad;
+      --accent-strong: #86dcc8;
+      --accent-soft: #1f2f2a;
+      --win: #74c294;
+      --win-soft: #1d2c22;
+      --loss: #e08d7b;
+      --loss-soft: #2e211d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141812;
+    --surface: #1b211c;
+    --surface-2: #1f261f;
+    --ink: #e9ece6;
+    --ink-muted: #a3ada2;
+    --ink-faint: #7d867c;
+    --line: #2c342d;
+    --line-soft: #232b24;
+    --accent: #5cc4ad;
+    --accent-strong: #86dcc8;
+    --accent-soft: #1f2f2a;
+    --win: #74c294;
+    --win-soft: #1d2c22;
+    --loss: #e08d7b;
+    --loss-soft: #2e211d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px 120px;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 700px);
+    gap: 64px;
+    justify-content: center;
+  }
+
+  @media (max-width: 880px) {
+    .page { grid-template-columns: minmax(0, 1fr); padding: 0 20px 80px; }
+    .toc { display: none; }
+  }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    grid-column: 1 / -1;
+    max-width: 700px;
+    margin: 72px auto 8px;
+    padding: 0 0 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 4vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* ---------- toc rail ---------- */
+  nav.toc {
+    position: sticky;
+    top: 48px;
+    align-self: start;
+    padding-top: 4px;
+  }
+  nav.toc .toc-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+  nav.toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--line);
+  }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    padding: 7px 0 7px 16px;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.toc a:hover { color: var(--ink); }
+  nav.toc a .n {
+    font-family: var(--font-mono);
+    color: var(--ink-faint);
+    margin-right: 8px;
+  }
+
+  /* ---------- article body ---------- */
+  main { min-width: 0; }
+
+  section { padding-top: 64px; }
+  section:first-of-type { padding-top: 48px; }
+  section + section { border-top: 1px solid var(--line-soft); }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 22px;
+  }
+  .sec-num {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+    flex: none;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.55rem;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin: 32px 0 12px;
+  }
+
+  p { margin: 0 0 16px; max-width: 66ch; }
+  p.lead {
+    font-size: 1.08rem;
+    color: var(--ink);
+  }
+  ul, ol.steps { margin: 0 0 16px; padding-left: 22px; max-width: 62ch; }
+  li { margin-bottom: 6px; }
+
+  code, .var {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 0.05em 0.4em;
+  }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    max-width: 62ch;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .callout-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 8px;
+  }
+
+  /* formula block */
+  .formula {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 18px 0 22px;
+    overflow-x: auto;
+    color: var(--ink);
+  }
+  .formula code { white-space: pre; }
+  .formula .comment { color: var(--ink-faint); }
+  .formula-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+
+  /* real source code panels -- a full function, not a two-line formula */
+  .code-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin: 18px 0 24px;
+    overflow: hidden;
+  }
+  .code-panel .code-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+  }
+  .code-panel .code-panel-head .path { color: var(--ink-muted); }
+  .code-panel pre {
+    margin: 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+  }
+  .code-panel code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    line-height: 1.6;
+    white-space: pre;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ink);
+  }
+  .code-panel .cm { color: var(--ink-faint); font-style: italic; }
+  .code-panel .kw { color: var(--accent-strong); }
+  .code-panel .st { color: var(--win); }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; margin: 18px 0 26px; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  caption {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+    caption-side: top;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-soft);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.92rem;
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+    font-weight: 500;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-family: var(--font-mono); }
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .pill.win { background: var(--win-soft); color: var(--win); }
+  .pill.loss { background: var(--loss-soft); color: var(--loss); }
+  .pill.neutral { background: var(--surface-2); color: var(--ink-muted); border: 1px solid var(--line); }
+
+  /* the triangular t[n][k] grid */
+  .grid-table td.diag { background: var(--accent-soft); font-weight: 600; color: var(--accent-strong); }
+  .grid-table td.empty { background: var(--surface-2); color: var(--ink-faint); }
+
+  /* mode / spec cards */
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 20px 0 26px;
+  }
+  .spec-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .spec-card h4 {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  .spec-card p { margin: 0; font-size: 0.94rem; color: var(--ink-muted); max-width: none; }
+  .spec-card p strong { color: var(--ink); }
+
+  /* step list for the session lifecycle */
+  ol.steps { counter-reset: step; }
+  ol.steps li {
+    list-style: none;
+    position: relative;
+    padding-left: 34px;
+    margin-bottom: 14px;
+  }
+  ol.steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05em;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---------- notation legend ---------- */
+  section.notation {
+    grid-column: 1 / -1;
+    max-width: 700px;
+    margin: 0 auto 8px;
+    padding: 40px 0 44px;
+    border-bottom: 1px solid var(--line);
+  }
+  section.notation .sec-head { margin-bottom: 16px; }
+  section.notation p.note {
+    color: var(--ink-muted);
+    max-width: 62ch;
+    margin: 0 0 20px;
+  }
+  table.legend { min-width: 0; }
+  table.legend td.sym {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--accent-strong);
+    white-space: nowrap;
+    width: 1%;
+  }
+  table.legend td.also {
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  footer.endnote {
+    grid-column: 1 / -1;
+    max-width: 700px;
+    margin: 56px auto 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Position-Sizing Algorithm</p>
+    <h1 class="title">The Masaniello Method</h1>
+    <p class="dek">A build reference for the Masaniello staking algorithm — the exact formulas,
+      data shapes, and source functions behind every stake, plan, and stop condition, in enough
+      detail to reimplement it from scratch and verify the result against real numbers.</p>
+  </header>
+
+  <section class="notation">
+    <div class="sec-head"><h2>Notation, before anything else</h2></div>
+    <p class="note">One point of confusion up front: lowercase letters are <strong>live, shrinking
+      values</strong> that count down as trades happen; the matching uppercase letter is the
+      <strong>fixed number the session started with</strong> and never changes — <var class="var">n</var>
+      starts at <var class="var">N</var> and counts down; <var class="var">N</var> itself never moves.
+      Every other symbol below is introduced properly where it first matters, but this is the one place
+      all of them are in one list.</p>
+    <div class="table-wrap">
+      <table class="legend">
+        <thead><tr><th>Symbol</th><th>Means</th><th>Named this in code</th></tr></thead>
+        <tbody>
+          <tr><td class="sym">n</td><td>Trades remaining <em>right now</em> — starts at <var class="var">N</var>, drops by 1 after every trade.</td><td class="also">tradesRemaining</td></tr>
+          <tr><td class="sym">N</td><td>Trades planned in total, fixed the moment a session starts.</td><td class="also">inputs.N</td></tr>
+          <tr><td class="sym">k</td><td>Wins still needed <em>right now</em> — starts at <var class="var">K</var>, drops by 1 after every win.</td><td class="also">winsNeeded</td></tr>
+          <tr><td class="sym">K</td><td>Wins targeted in total, fixed the moment a session starts.</td><td class="also">inputs.K</td></tr>
+          <tr><td class="sym">t</td><td>The table (§02) — <code>t[n][k]</code> is the growth multiplier for landing <var class="var">k</var> wins somewhere within the next <var class="var">n</var> trades.</td><td class="also">return value of build_table()</td></tr>
+          <tr><td class="sym">q</td><td>A payout, always written as a decimal — 0.92, never 92.</td><td class="also">—</td></tr>
+          <tr><td class="sym">q_avg</td><td>The one payout assumption the table itself was built on. Fixed until the table is rebuilt.</td><td class="also">avgPayoutPct ÷ 100</td></tr>
+          <tr><td class="sym">q_next</td><td>The real payout being offered on the very next trade — what every actual stake is computed from (§03), whether or not it matches q_avg.</td><td class="also">payoutPctUsed</td></tr>
+          <tr><td class="sym">a, b</td><td>Local names inside stake_fraction (§03) for the table's win-branch and loss-branch values on the trade about to be taken.</td><td class="also">t[n-1][k-1], t[n-1][k]</td></tr>
+          <tr><td class="sym">m</td><td>Only in the diagonal anchor (§02) — shorthand for "n at the exact point where n equals k."</td><td class="also">t[m][m]</td></tr>
+          <tr><td class="sym">c0</td><td>The balance a session <em>started</em> with — the fixed anchor every Take Profit / Stop Loss threshold (§09) is measured against, never the live balance.</td><td class="also">inputs.bankroll</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <nav class="toc">
+    <p class="toc-label">On this page</p>
+    <ol>
+      <li><a href="#idea"><span class="n">01</span>The core idea</a></li>
+      <li><a href="#table"><span class="n">02</span>Building the table</a></li>
+      <li><a href="#stake"><span class="n">03</span>Turning a cell into a stake</a></li>
+      <li><a href="#worked"><span class="n">04</span>A worked session</a></li>
+      <li><a href="#endgame"><span class="n">05</span>The endgame trade</a></li>
+      <li><a href="#data"><span class="n">06</span>Data model</a></li>
+      <li><a href="#lifecycle"><span class="n">07</span>Session lifecycle</a></li>
+      <li><a href="#planning"><span class="n">08</span>Planning a session</a></li>
+      <li><a href="#guardrails"><span class="n">09</span>Take Profit &amp; Stop Loss</a></li>
+      <li><a href="#verify"><span class="n">10</span>Verifying a rebuild</a></li>
+      <li><a href="#trust"><span class="n">11</span>Why the numbers hold up</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="idea">
+      <div class="sec-head"><span class="sec-num">01</span><h2>The core idea</h2></div>
+      <p class="lead">The algorithm doesn't stake a fixed dollar amount, and it doesn't stake a fixed
+        percentage. It stakes exactly the amount that makes one fact true: <strong>whichever <var
+        class="var">k</var> of your remaining <var class="var">n</var> trades you happen to win, in
+        whatever order, you land on the same final balance.</strong></p>
+      <p>That's the whole method in one sentence. Win early and the stakes still ahead of you shrink,
+        because you need fewer wins from fewer trades. Lose early and the next stake grows, because the
+        same win count now has to come from a shorter runway. The table in the next section is what makes
+        that adjustment exact instead of a rule of thumb.</p>
+      <div class="callout">
+        <p class="callout-label">Where this lives in the code</p>
+        <p><code>trade_manager/masaniello.py</code> is a line-for-line port of a reference
+          JavaScript implementation — the algorithm itself was never redesigned in the port,
+          only translated from one language to another.</p>
+      </div>
+    </section>
+
+    <section id="table">
+      <div class="sec-head"><span class="sec-num">02</span><h2>Building the table</h2></div>
+      <p>Everything starts with <code>build_table(n, q_avg)</code>, which fills a triangular grid
+        <var class="var">t[n][k]</var>: the multiplier your bankroll grows by if you land exactly
+        <var class="var">k</var> wins somewhere within the next <var class="var">n</var> trades, at an
+        average payout <var class="var">q_avg</var> (a decimal — 0.90, not 90).</p>
+      <p>Two edges anchor the grid, and everything else is filled in between them by recursion:</p>
+      <div class="formula">
+        <p class="formula-title">The two anchors</p>
+<code>t[n][0] = 1.0            <span class="comment">// already hit your win target — nothing left to risk</span>
+t[m][m] = (1 + q)^m      <span class="comment">// must win every single remaining trade</span></code>
+      </div>
+      <div class="formula">
+        <p class="formula-title">Everything in between</p>
+<code>t[n][k] = ( t[n-1][k-1] · t[n-1][k] · (1 + q) )
+          -----------------------------------------
+              ( t[n-1][k-1] · q  +  t[n-1][k] )</code>
+      </div>
+      <p>Each cell is built from the two cells that could follow it — one trade win away
+        (<code>t[n-1][k-1]</code>), one trade loss away (<code>t[n-1][k]</code>) — weighted so that a win
+        and a loss on that next trade both land you back on the same table. It's the same recursive
+        shape as Pascal's triangle; the payoff ratio is what bends it instead of the usual 1s.</p>
+
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/masaniello.py</span><span>Python</span></div>
+        <pre><code>def build_table(n: int, q_avg: float) -> list[list[float]]:
+    <span class="cm"># t[n][k]: growth multiplier for landing k wins within n trades, any order</span>
+    size = n + 1
+    t = [[0.0] * size for _ in range(size)]
+
+    for nn in range(size):
+        t[nn][0] = 1.0                      <span class="cm"># target already met</span>
+
+    for m in range(size):
+        t[m][m] = (1 + q_avg) ** m          <span class="cm"># must win every remaining trade</span>
+
+    for nn in range(1, size):
+        for k in range(1, nn):              <span class="cm"># kMax = nn-1 always, since nn &lt;= n throughout</span>
+            a = t[nn - 1][k - 1]            <span class="cm"># multiplier if this trade wins</span>
+            b = t[nn - 1][k]                <span class="cm"># multiplier if this trade loses</span>
+            t[nn][k] = (a * b * (1 + q_avg)) / (a * q_avg + b)
+
+    return t</code></pre>
+      </div>
+      <p>Complexity is <code>O(n²)</code> — one nested loop over a triangular grid. Build once per
+        session (whenever <var class="var">n</var> or the average payout assumption changes), then reuse
+        the same table for every stake in that session; there's no reason to rebuild it per trade.</p>
+
+      <h3>The grid for a real example</h3>
+      <p>Here's <var class="var">t</var> filled all the way to <var class="var">n</var> = 3 at a 100%
+        payout (<var class="var">q</var> = 1.0) — the same numbers the worked example below uses.</p>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption>t[n][k] — multiplier on starting capital</caption>
+          <thead>
+            <tr><th>n \ k</th><th class="num">0</th><th class="num">1</th><th class="num">2</th><th class="num">3</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>0</th><td class="num diag">1.00×</td><td class="num empty">—</td><td class="num empty">—</td><td class="num empty">—</td></tr>
+            <tr><th>1</th><td class="num">1.00×</td><td class="num diag">2.00×</td><td class="num empty">—</td><td class="num empty">—</td></tr>
+            <tr><th>2</th><td class="num">1.00×</td><td class="num">1.33×</td><td class="num diag">4.00×</td><td class="num empty">—</td></tr>
+            <tr><th>3</th><td class="num">1.00×</td><td class="num">1.14×</td><td class="num">2.00×</td><td class="num diag">8.00×</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The tinted diagonal is the <code>(1+q)^m</code> anchor — the "must win everything left" case,
+        covered in <a href="#endgame">§05</a>. Everything to its left is the recursion filling in.</p>
+    </section>
+
+    <section id="stake">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Turning a cell into a stake</h2></div>
+      <p>The table only holds multipliers. The actual dollar figure you see before each trade comes from
+        <code>stake_fraction()</code>, which reads off <em>this trade's</em> slice of the table and
+        converts it into a fraction of your current balance:</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/masaniello.py</span><span>Python</span></div>
+        <pre><code>def stake_fraction(n, k, q_next, t, diagonal_mode, max_stake_percent) -> float:
+    if k &lt;= 0:
+        return 0.0                          <span class="cm"># already hit target win count</span>
+    if n &lt;= k:                              <span class="cm"># diagonal -- see §05</span>
+        if diagonal_mode == "capped":
+            cap = max_stake_percent if isinstance(max_stake_percent, (int, float)) else 100
+            return min(1.0, max(0.0, cap / 100))
+        return 1.0                          <span class="cm"># pure mode: stake it all</span>
+    a = t[n - 1][k - 1]
+    b = t[n - 1][k]
+    denom = a * q_next + b
+    if denom &lt;= 0:
+        return 0.0
+    return (b - a) / denom
+
+
+def next_stake(current_capital, trades_remaining, wins_still_needed,
+               q_next, t, diagonal_mode, max_stake_percent) -> float:
+    frac = stake_fraction(trades_remaining, wins_still_needed, q_next,
+                           t, diagonal_mode, max_stake_percent)
+    return current_capital * frac</code></pre>
+      </div>
+      <p>Notice the table itself is built once from your <em>average</em> assumed payout
+        (<code>q_avg</code>), but every individual stake uses <code>q_next</code> — the real payout the
+        broker is offering on <em>this specific trade</em>, which binary-options payouts shift on
+        constantly. Average and actual can differ without needing to rebuild anything; only this last
+        step reads the live number.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Test vector — table built at 80% average, staked at 92% live payout</caption>
+          <thead><tr><th>Input</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td><var class="var">n</var>, <var class="var">k</var></td><td class="num">3, 1</td></tr>
+            <tr><td><var class="var">q_avg</var> (table built on)</td><td class="num">0.80</td></tr>
+            <tr><td><var class="var">q_next</var> (this trade's live payout)</td><td class="num">0.92</td></tr>
+            <tr><td><code>next_stake(100, 3, 1, 0.92, t, "pure", None)</code></td><td class="num">≠ <code>next_stake(100, 3, 1, 0.80, t, "pure", None)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p class="callout-label">Why this distinction matters</p>
+        <p>If stakes were computed off the average instead, the tracked balance would quietly drift away from
+          your real broker balance every time the offered payout moved even slightly from the average —
+          exactly the kind of silent mismatch this method is built to avoid.</p>
+      </div>
+    </section>
+
+    <section id="worked">
+      <div class="sec-head"><span class="sec-num">04</span><h2>A worked session</h2></div>
+      <p class="lead">$100 bankroll, 3 trades planned, 1 win needed, payout 100% flat — the exact case the
+        algorithm's own test suite checks by hand.</p>
+      <p>Trade 1's stake comes straight from the grid above: <code>t[2][0]=1.00</code>,
+        <code>t[2][1]=1.33</code>, so <code>stake_fraction = (1.33 − 1.00) / (1.00×1 + 1.33) ≈ 1/7</code>
+        — $14.29 of the $100 bankroll. What happens next branches on the result:</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Path A — the win lands on trade 1</caption>
+          <thead><tr><th>Trade</th><th class="num">Stake</th><th>Result</th><th class="num">Balance after</th></tr></thead>
+          <tbody>
+            <tr><td>1 of 3</td><td class="num">$14.29</td><td><span class="pill win">WIN</span></td><td class="num">$114.29</td></tr>
+            <tr><td colspan="4" style="color:var(--ink-faint); font-style:italic;">Target already met — session ends here, 2 trades never used.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>Path B — the win doesn't land until trade 3</caption>
+          <thead><tr><th>Trade</th><th class="num">Stake</th><th>Result</th><th class="num">Balance after</th></tr></thead>
+          <tbody>
+            <tr><td>1 of 3</td><td class="num">$14.29</td><td><span class="pill loss">LOSS</span></td><td class="num">$85.71</td></tr>
+            <tr><td>2 of 2</td><td class="num">$28.57</td><td><span class="pill loss">LOSS</span></td><td class="num">$57.14</td></tr>
+            <tr><td>3 of 1</td><td class="num">$57.14</td><td><span class="pill win">WIN</span></td><td class="num">$114.28</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Both paths land within a cent of the same $114.28–$114.29 — the one-cent gap is nothing but
+        rounding drift across two different arithmetic paths, not a flaw. Trade a 2, then a 1, needed to
+        win exactly once out of what's left each time; the stake grows precisely enough each step to keep
+        that promise, right up to trade 3 becoming a must-win-it-all stake of the entire remaining
+        balance.</p>
+    </section>
+
+    <section id="endgame">
+      <div class="sec-head"><span class="sec-num">05</span><h2>The endgame trade</h2></div>
+      <p>Whenever trades left equals wins still needed (<var class="var">n</var> = <var class="var">k</var>
+        — the diagonal in the table), every remaining trade has to be a win. Call this
+        <strong>Endgame handling</strong>, and it's the one place a caller decides how aggressive the
+        method is allowed to get:</p>
+      <div class="card-row">
+        <div class="spec-card">
+          <h4>Mode: pure</h4>
+          <p>Stakes <strong>100% of current capital</strong> on the must-win trade — the original,
+            textbook Masaniello method. A single loss here ends the session with nothing left. Highest
+            possible ceiling, zero cushion.</p>
+        </div>
+        <div class="spec-card">
+          <h4>Mode: capped</h4>
+          <p>Caps the stake at <strong>Max stake %</strong> of current capital instead of going all-in.
+            Trades a lower profit ceiling for keeping some capital if that last trade is lost.</p>
+        </div>
+      </div>
+      <p>This is exactly the choice in the worked example's trade 3: pure mode staked the full $57.14;
+        capped mode at, say, 50% would have staked $28.57 and left the other half untouched either way.</p>
+    </section>
+
+    <section id="data">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Data model</h2></div>
+      <p>One plain data structure carries a session from start to finish — no ORM, no classes, a dict
+        (or the JSON equivalent, for a non-Python rebuild) that every function above reads and a few
+        functions below mutate directly.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Session record</caption>
+          <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>uuid</td><td>Stable identity, unchanged for the life of the session.</td></tr>
+            <tr><td><code>status</code></td><td>"active" | "ended"</td><td>Gates whether inline correction (§07) is allowed.</td></tr>
+            <tr><td><code>inputs.bankroll</code></td><td>float</td><td>Starting capital — the fixed <var class="var">c0</var> every Take Profit / Stop Loss threshold is measured against.</td></tr>
+            <tr><td><code>inputs.N</code>, <code>inputs.K</code></td><td>int</td><td>Trades planned, wins targeted — fixed once the session starts.</td></tr>
+            <tr><td><code>inputs.avgPayoutPct</code></td><td>float</td><td>The <var class="var">q_avg</var> the table (§02) was built on, as a percent (92, not 0.92).</td></tr>
+            <tr><td><code>inputs.takeProfit</code>, <code>inputs.stopLoss</code></td><td>object</td><td><code>{ type, value, dollarMode, forceEnd }</code> — see §09.</td></tr>
+            <tr><td><code>inputs.diagonalMode</code>, <code>inputs.maxStakePercent</code></td><td>string, float?</td><td>The Endgame handling choice from §05.</td></tr>
+            <tr><td><code>currentCapital</code></td><td>float</td><td>Live balance — starts at <code>bankroll</code>, updates after every trade.</td></tr>
+            <tr><td><code>tradesRemaining</code>, <code>winsNeeded</code></td><td>int</td><td>Live <var class="var">n</var>/<var class="var">k</var> fed into every <code>next_stake()</code> call — start at <code>N</code>/<code>K</code>, count down as trades land.</td></tr>
+            <tr><td><code>trades</code></td><td>array</td><td>One record per completed trade, oldest first — see below.</td></tr>
+            <tr><td><code>endReason</code></td><td>string?</td><td><code>null</code> while active; one of six reason strings once ended — see §07.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>Trade record — one entry in session.trades</caption>
+          <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>payoutPctUsed</code></td><td>float</td><td>The <var class="var">q_next</var> actually used for this trade's stake (§03) — never the average.</td></tr>
+            <tr><td><code>stakeSuggested</code></td><td>float</td><td>What <code>next_stake()</code> computed, before any manual override.</td></tr>
+            <tr><td><code>stakeUsed</code></td><td>float</td><td>What actually got staked — same as <code>stakeSuggested</code> unless overridden, always clamped to <code>currentCapital</code>.</td></tr>
+            <tr><td><code>capitalAfter</code></td><td>float</td><td>Running balance right after this trade — what the <em>next</em> trade's stake is computed against.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/session.py</span><span>Python</span></div>
+        <pre><code>def create_session(bankroll, n, k, avg_payout_pct,
+                    take_profit, stop_loss, diagonal_mode, max_stake_percent) -> dict:
+    return {
+        "id": str(uuid.uuid4()),
+        "startedAt": datetime.now().isoformat(),
+        "status": "active",
+        "inputs": {
+            "bankroll": bankroll, "N": n, "K": k,
+            "avgPayoutPct": avg_payout_pct,
+            "takeProfit": dict(take_profit),
+            "stopLoss": dict(stop_loss),
+            "diagonalMode": diagonal_mode,
+            "maxStakePercent": max_stake_percent,
+        },
+        "currentCapital": bankroll,
+        "tradesRemaining": n,
+        "winsNeeded": k,
+        "trades": [],
+        "endReason": None,
+        "endedAt": None,
+    }</code></pre>
+      </div>
+    </section>
+
+    <section id="lifecycle">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Session lifecycle</h2></div>
+      <p>Three operations mutate the session record above: recording a trade, checking whether it should
+        end, and correcting a misrecorded result. All three live together because they share one rule —
+        <strong>never trust a cached derived value; recompute it from the trade list every time.</strong></p>
+
+      <h3>Recording a trade</h3>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/session.py</span><span>Python</span></div>
+        <pre><code>def record_trade(session, result, q_next_pct, stake_used=None) -> dict | None:
+    table = build_table(session["inputs"]["N"], session["inputs"]["avgPayoutPct"] / 100)
+    suggested = round2(clamp(
+        suggested_stake_for(session, table, q_next_pct), 0, session["currentCapital"]
+    ))
+    if stake_used is None or stake_used &lt; 0:
+        stake_used = suggested
+    stake_used = round2(min(stake_used, session["currentCapital"]))  <span class="cm"># never stake more than you have</span>
+
+    capital_after = (
+        round2(session["currentCapital"] + stake_used * (q_next_pct / 100))
+        if result == "win"
+        else round2(session["currentCapital"] - stake_used)
+    )
+
+    session["trades"].append({
+        "index": len(session["trades"]) + 1,
+        "payoutPctUsed": q_next_pct,
+        "stakeSuggested": suggested,
+        "stakeUsed": stake_used,
+        "result": result,
+        "capitalAfter": capital_after,
+    })
+
+    session["currentCapital"] = capital_after
+    session["tradesRemaining"] -= 1
+    if result == "win":
+        session["winsNeeded"] -= 1
+
+    reason = check_end_conditions(session)
+    return end_session(session, reason) if reason else None</code></pre>
+      </div>
+
+      <h3>Checking whether the session should end</h3>
+      <p>Called after every recorded trade, always in this priority order — so two conditions that could
+        both be true at once (say, balance hit $0 <em>and</em> the win target became impossible) are
+        never reported as the wrong one:</p>
+      <ol class="steps">
+        <li><strong>Target unreachable</strong> — <code>tradesRemaining &lt; winsNeeded</code>. Losses so
+          far have made the target mathematically impossible, regardless of balance.</li>
+        <li><strong>Target hit</strong> — <code>winsNeeded == 0</code>.</li>
+        <li><strong>Take Profit</strong> — only if its <code>forceEnd</code> flag isn't <code>False</code>.</li>
+        <li><strong>Stop Loss</strong> — only if its <code>forceEnd</code> flag isn't <code>False</code>.</li>
+        <li><strong>Trades exhausted</strong> — <code>tradesRemaining == 0</code> without any of the above.</li>
+      </ol>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/session.py</span><span>Python</span></div>
+        <pre><code>def check_end_conditions(session) -> str | None:
+    inputs = session["inputs"]
+    c0 = inputs["bankroll"]
+    current_capital = session["currentCapital"]
+
+    if session["tradesRemaining"] &lt; session["winsNeeded"]:
+        return "target_unreachable"
+    if session["winsNeeded"] == 0:
+        return "target_hit"
+
+    tp_amt = threshold_amount(c0, inputs["takeProfit"])
+    if inputs["takeProfit"].get("forceEnd", True) is not False and current_capital - c0 &gt;= tp_amt:
+        return "take_profit"
+
+    sl_amt = threshold_amount(c0, inputs["stopLoss"])
+    if inputs["stopLoss"].get("forceEnd", True) is not False and c0 - current_capital &gt;= sl_amt:
+        return "stop_loss"
+
+    if session["tradesRemaining"] == 0:
+        return "trades_exhausted"
+    return None</code></pre>
+      </div>
+
+      <h3>Correcting a misrecorded result</h3>
+      <p>Only while <code>status == "active"</code> — a completed history record never needs to be
+        un-archived. Editing one trade's result recomputes every <code>capitalAfter</code> downstream of
+        it, then re-runs the end-condition check above — so fixing a misclick can retroactively end a
+        session that looked like it was still running.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/session.py</span><span>Python</span></div>
+        <pre><code>def edit_trade_result(session, idx, new_result) -> dict | None:
+    if session["status"] != "active":
+        return None
+    trades = session["trades"]
+    trade = trades[idx - 1]
+    if trade["result"] == new_result:
+        return None
+    trade["result"] = new_result
+
+    for i in range(idx - 1, len(trades)):        <span class="cm"># recompute every downstream balance</span>
+        t = trades[i]
+        before = session["inputs"]["bankroll"] if i == 0 else trades[i - 1]["capitalAfter"]
+        t["capitalAfter"] = (
+            round2(before + t["stakeUsed"] * (t["payoutPctUsed"] / 100))
+            if t["result"] == "win"
+            else round2(before - t["stakeUsed"])
+        )
+
+    wins = sum(1 for t in trades if t["result"] == "win")
+    session["currentCapital"] = trades[-1]["capitalAfter"] if trades else session["inputs"]["bankroll"]
+    session["tradesRemaining"] = session["inputs"]["N"] - len(trades)
+    session["winsNeeded"] = session["inputs"]["K"] - wins
+
+    reason = check_end_conditions(session)
+    return end_session(session, reason) if reason else None</code></pre>
+      </div>
+    </section>
+
+    <section id="planning">
+      <div class="sec-head"><span class="sec-num">08</span><h2>Planning a session</h2></div>
+      <p>Everything above computes one stake at a time once <var class="var">n</var> and <var
+        class="var">k</var> are already decided. This layer's job is landing on a sane
+        <var class="var">n</var>/<var class="var">k</var> in the first place — and it covers two
+        different ways to get there, because "plan today" and "plan toward a future date" are genuinely
+        different problems.</p>
+
+      <p>Two building blocks feed both modes: rounding a target win rate to a whole win count, and
+        finding how many trades a balance can actually fund before trade 1's stake drops below a
+        broker's minimum.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/masaniello.py</span><span>Python</span></div>
+        <pre><code>def wins_needed_for_rate(n, win_rate_pct) -> int:
+    return min(n, max(1, round((win_rate_pct / 100) * n)))
+
+
+def compute_max_trades(bankroll, win_rate_pct, avg_payout_pct,
+                        diagonal_mode, max_stake_percent,
+                        min_stake=1, max_search_n=300) -> dict:
+    q = avg_payout_pct / 100
+    best_n, best_k = 0, 0
+
+    for n in range(1, max_search_n + 1):
+        k = wins_needed_for_rate(n, win_rate_pct)
+        table = build_table(n, q)
+        stake1 = bankroll * stake_fraction(n, k, q, table, diagonal_mode, max_stake_percent)
+        if stake1 &gt;= min_stake - 1e-9:
+            best_n, best_k = n, k
+        else:
+            break                        <span class="cm"># first shortfall is the hard ceiling -- see note below</span>
+
+    return {
+        "n": best_n, "k": best_k,
+        "achievedWinRatePct": (best_k / best_n * 100) if best_n &gt; 0 else 0.0,
+        "cappedAtSearchLimit": best_n == max_search_n,
+    }</code></pre>
+      </div>
+      <div class="callout">
+        <p class="callout-label">Why it stops at the first shortfall</p>
+        <p>Because <var class="var">k</var> jumps in discrete steps as <var class="var">n</var> grows, a
+          <em>later</em> <var class="var">n</var> can occasionally clear the minimum stake again even
+          though smaller values in between didn't. "You can plan for 9 trades, just not 7 or 8" isn't a
+          coherent answer to show someone, so the first shortfall is treated as the hard ceiling rather
+          than searching past it for a later reprieve.</p>
+      </div>
+
+      <h3>Fixed win rate: compute_trade_count_options</h3>
+      <p>Given a starting balance, a target win rate, and an average payout, this scans every trade
+        count from 1 upward and keeps whichever ones that balance can actually afford — specifically,
+        ones where trade 1's stake doesn't fall below a $1 minimum — up to a caller-supplied ceiling
+        (20 by default), returning each as an option with its projected final balance if the plan lands
+        exactly on target.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/planning.py</span><span>Python</span></div>
+        <pre><code>def compute_trade_count_options(bankroll, win_rate_pct, avg_payout_pct,
+                                 diagonal_mode, max_stake_percent,
+                                 max_options=20, stop_loss=None) -> dict:
+    result = compute_max_trades(bankroll, win_rate_pct, avg_payout_pct,
+                                 diagonal_mode, max_stake_percent, 1, max_options)
+    if result["n"] &lt; 1:
+        return {"options": [], "cappedAtSearchLimit": False}
+
+    sl_amount = threshold_amount(bankroll, stop_loss) if stop_loss is not None else None
+    q_avg = avg_payout_pct / 100
+    options = []
+    for n in range(1, result["n"] + 1):
+        k = wins_needed_for_rate(n, win_rate_pct)
+        table = build_table(n, q_avg)
+        projected_final = bankroll * table[n][k]
+        profit = projected_final - bankroll
+        first_trade_stake = next_stake(bankroll, n, k, q_avg, table, diagonal_mode, max_stake_percent)
+        <span class="cm"># does losing trade 1 alone cross the Stop Loss threshold?</span>
+        survives_first_loss = sl_amount is None or first_trade_stake &lt; sl_amount
+        options.append({
+            "n": n, "k": k,
+            "projectedFinal": projected_final, "profit": profit,
+            "profitPct": (profit / bankroll) * 100,
+            "firstTradeStake": first_trade_stake,
+            "survivesFirstLoss": survives_first_loss,
+        })
+    return {"options": options, "cappedAtSearchLimit": result["cappedAtSearchLimit"]}</code></pre>
+      </div>
+      <p>Rather than assume a win rate up front, <code>suggest_best_plan()</code> searches win rates from
+        1–99% against every affordable trade count and returns the single combination with the highest
+        projected profit that still <em>survives a single first-trade loss</em> without crossing the
+        given Stop Loss. It's a real search, not a shortcut toward the highest number on the grid: a
+        higher assumed win rate always demands a bigger first stake for a fixed trade count, so the Stop
+        Loss genuinely bounds how aggressive a win rate it's willing to suggest.
+        It <em>is</em> degenerate in trade count if left unbounded, though — for a fixed win rate, more
+        trades spreads the same risk thinner while also raising the profit ceiling, so a caller-supplied
+        <code>max_trade_count</code> exists specifically so this can't silently push toward the full
+        20-trade ceiling on its own.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/planning.py</span><span>Python</span></div>
+        <pre><code>def suggest_best_plan(bankroll, avg_payout_pct, diagonal_mode, max_stake_percent,
+                       stop_loss, max_trade_count=20) -> dict | None:
+    sl_amount = threshold_amount(bankroll, stop_loss)
+    if not (sl_amount &gt; 0):
+        return None                     <span class="cm"># a zero/negative threshold can never be survived</span>
+
+    best = None
+    for i in range(99):                 <span class="cm"># win rate 1%..99%, 1% steps</span>
+        win_rate_pct = 1.0 + i
+        result = compute_trade_count_options(
+            bankroll, win_rate_pct, avg_payout_pct, diagonal_mode, max_stake_percent,
+            max_options=max_trade_count, stop_loss=stop_loss,
+        )
+        for opt in result["options"]:
+            if not opt["survivesFirstLoss"]:
+                continue
+            if best is None or opt["profitPct"] &gt; best["profitPct"]:
+                best = {**opt, "winRatePct": win_rate_pct}
+    return best</code></pre>
+      </div>
+
+      <h3>Target over time: suggest_multiday_plan_options</h3>
+      <p>Here the question flips: instead of "given a win rate, what can I afford," it's "given a
+        <em>target balance</em> by some future point, what's the safest way to get there." Given a
+        target gain percentage, a count of days available, and a ceiling on total trades, it finds, for
+        <em>every</em> achievable total trade count, the <strong>minimum</strong> win rate that still
+        reaches the target — the least demanding, safest option for that pace.</p>
+      <p>Every option is returned, not just one: which trade count versus win rate is an acceptable pace
+        is a tradeoff external to the algorithm, so nothing here picks a single winner the way
+        <code>suggest_best_plan()</code> does — that function has no such external constraint and can
+        settle it on profit and safety alone; this one can't.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/planning.py</span><span>Python</span></div>
+        <pre><code>MAX_MULTIDAY_SEARCH_TRADES = 200        <span class="cm"># cost grows ~O(n^3); ~0.23s at 200, ~4.7s at 500</span>
+
+def suggest_multiday_plan_options(bankroll, target_gain_pct, avg_payout_pct,
+                                   diagonal_mode, max_stake_percent, stop_loss,
+                                   days_available, max_total_trades=20) -> dict:
+    capped = max_total_trades &gt; MAX_MULTIDAY_SEARCH_TRADES
+    max_total_trades = min(max_total_trades, MAX_MULTIDAY_SEARCH_TRADES)
+
+    target_mult = 1 + target_gain_pct / 100
+    q_avg = avg_payout_pct / 100
+    sl_amount = threshold_amount(bankroll, stop_loss) if stop_loss is not None else None
+
+    options = []
+    for n in range(1, max_total_trades + 1):
+        table = build_table(n, q_avg)
+        if table[n][n] &lt; target_mult:
+            continue                    <span class="cm"># unreachable even winning every single trade</span>
+        k = next(kk for kk in range(1, n + 1) if table[n][kk] &gt;= target_mult)
+        win_rate_pct = k / n * 100
+        projected_final = bankroll * table[n][k]
+        profit = projected_final - bankroll
+        first_trade_stake = next_stake(bankroll, n, k, q_avg, table, diagonal_mode, max_stake_percent)
+        survives_first_loss = sl_amount is None or first_trade_stake &lt; sl_amount
+        options.append({
+            "n": n, "k": k, "winRatePct": win_rate_pct,
+            "tradesPerDay": n / days_available,
+            "projectedFinal": projected_final, "profit": profit,
+            "profitPct": (profit / bankroll) * 100,
+            "firstTradeStake": first_trade_stake,
+            "survivesFirstLoss": survives_first_loss,
+        })
+    return {"options": options, "cappedAtSearchLimit": capped}</code></pre>
+      </div>
+      <p>Relies on <code>build_table(n, q)[n][k]</code> being monotonically non-decreasing in <var
+        class="var">k</var> for fixed <var class="var">n</var> — verified empirically, not just assumed —
+        which is what makes "smallest <var class="var">k</var> that clears the target" well-defined via a
+        plain linear scan.</p>
+      <div class="callout">
+        <p class="callout-label">survivesFirstLoss is a flag, not a filter</p>
+        <p>Both search functions return every affordable option and let each carry its own
+          <code>survivesFirstLoss</code> value — neither one silently drops the options that would
+          hit Stop Loss on a single first-trade loss. Whether a caller filters those out, flags them, or
+          shows everything is a decision made on top of the results, not inside the search itself.</p>
+        </div>
+    </section>
+
+    <section id="guardrails">
+      <div class="sec-head"><span class="sec-num">09</span><h2>Take Profit &amp; Stop Loss</h2></div>
+      <p>Independent of the staking math, Take Profit and Stop Loss are a dollar or percentage ceiling and
+        floor watching your <em>actual</em> balance as trades land. Each can be set as <code>percent</code>
+        of your starting bankroll, or a flat <code>dollar</code> figure — and for dollar, exactly what
+        that figure means is deliberately spelled out rather than assumed:</p>
+      <div class="card-row">
+        <div class="spec-card">
+          <h4>amount</h4>
+          <p>"End once I've gained/lost <strong>this much, total</strong>, from where I started." The
+            default for both.</p>
+        </div>
+        <div class="spec-card">
+          <h4>floor <span style="color:var(--ink-faint); font-weight:400;">(Stop Loss only)</span></h4>
+          <p>"End once my balance <strong>drops to</strong> this figure" — not once I've lost this figure.</p>
+        </div>
+        <div class="spec-card">
+          <h4>ceiling <span style="color:var(--ink-faint); font-weight:400;">(Take Profit only)</span></h4>
+          <p>"End once my balance <strong>reaches</strong> this figure" — not once I've merely gained this
+            figure.</p>
+        </div>
+      </div>
+      <p>The distinction exists because it's an easy way to lose real money to a misunderstanding: a $1
+        stop-loss meant as "stop once my balance is down to $1" ends a session almost instantly if it's
+        computed as the default <code>"amount"</code> mode instead — "stop the moment I've lost $1
+        total." <code>floor</code>/<code>ceiling</code> exist specifically so that ambiguity can't recur.</p>
+      <p>Each guardrail also carries its own <code>forceEnd</code> flag (default <code>True</code>) —
+        set to <code>False</code>, <code>check_end_conditions()</code> (§07) simply skips that threshold
+        entirely and the session keeps running past it. The flag only controls whether crossing the
+        threshold ends the session; surfacing any kind of notice about it is left entirely to the
+        caller.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><span class="path">trade_manager/masaniello.py</span><span>Python</span></div>
+        <pre><code>def threshold_amount(bankroll, tp_sl) -> float:
+    <span class="cm"># tp_sl = { type: 'percent'|'dollar', value, dollarMode }</span>
+    if tp_sl["type"] == "percent":
+        return bankroll * (tp_sl["value"] / 100)
+    if tp_sl.get("dollarMode") == "floor":
+        return max(0.0, bankroll - tp_sl["value"])
+    if tp_sl.get("dollarMode") == "ceiling":
+        return max(0.0, tp_sl["value"] - bankroll)
+    return tp_sl["value"]                   <span class="cm"># default 'amount' mode</span></code></pre>
+      </div>
+      <p>The exact bug this shape fixes, as a checkable pair of numbers — $100 bankroll, a $1 Stop Loss,
+        down to $55 remaining (a $45 loss so far):</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Same $1 input, two different thresholds</caption>
+          <thead><tr><th>dollarMode</th><th>threshold_amount(100, ...)</th><th>Triggered at $55 remaining?</th></tr></thead>
+          <tbody>
+            <tr><td><code>"amount"</code></td><td class="num">$1</td><td>Yes — $45 lost ≥ $1 threshold. <span class="pill loss">the bug</span></td></tr>
+            <tr><td><code>"floor"</code></td><td class="num">$99</td><td>No — $45 lost &lt; $99 threshold. <span class="pill win">the fix</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="verify">
+      <div class="sec-head"><span class="sec-num">10</span><h2>Verifying a rebuild</h2></div>
+      <p>A reimplementation is only as trustworthy as the numbers it's been checked against. These are
+        hand-derivable, not just copied from a passing test run — work them out independently and compare:</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Core staking checks</caption>
+          <thead><tr><th>Case</th><th>Call</th><th class="num">Expected</th></tr></thead>
+          <tbody>
+            <tr><td>Full §04 worked example, trade 1</td><td><code>next_stake(100, 3, 1, 1.0, t, "pure", None)</code></td><td class="num">$14.29</td></tr>
+            <tr><td>…trade 2, after one loss</td><td><code>next_stake(85.71, 2, 1, 1.0, t, "pure", None)</code></td><td class="num">$28.57</td></tr>
+            <tr><td>…trade 3, diagonal (n=k=1)</td><td><code>next_stake(57.14, 1, 1, 1.0, t, "pure", None)</code></td><td class="num">$57.14</td></tr>
+            <tr><td>Diagonal, capped mode, 50% cap</td><td><code>stake_fraction(2, 2, 0.8, t, "capped", 50)</code></td><td class="num">0.5</td></tr>
+            <tr><td>Target already met</td><td><code>stake_fraction(3, 0, 0.8, t, "pure", None)</code></td><td class="num">0</td></tr>
+            <tr><td>Diagonal anchor, m=5, q=0.8</td><td><code>build_table(5, 0.8)[5][5]</code></td><td class="num">1.8⁵ ≈ 18.90</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption><code>compute_max_trades</code> checks</caption>
+          <thead><tr><th>Call</th><th class="num">Expected</th></tr></thead>
+          <tbody>
+            <tr><td><code>compute_max_trades(100, 20, 100, "pure", None)</code></td><td class="num">n=6, k=1</td></tr>
+            <tr><td>&nbsp;&nbsp;— reasoning</td><td class="num">n=7 needs $0.79 &lt; $1 min stake</td></tr>
+            <tr><td><code>compute_max_trades(0.5, 20, 100, "pure", None)</code></td><td class="num">n=0 (bankroll below min stake)</td></tr>
+            <tr><td><code>compute_max_trades(100, 100, 100, "pure", None, max_search_n=10)</code></td><td class="num">n=10, <code>cappedAtSearchLimit=True</code></td></tr>
+            <tr><td>&nbsp;&nbsp;— reasoning</td><td class="num">100% win rate is always the diagonal case for any n, so it never finds a real ceiling — it legitimately hits the search cap</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Full suites — <code>trade_manager/test_masaniello.py</code> (36 checks) and
+        <code>trade_manager/test_planning.py</code> (122 checks) — cover considerably more than fits here;
+        treat these as a smoke test, not the whole contract.</p>
+    </section>
+
+    <section id="trust">
+      <div class="sec-head"><span class="sec-num">11</span><h2>Why the numbers hold up</h2></div>
+      <p>None of the math above was designed from scratch here. It's a direct port of a reference
+        implementation that was already hand-tested against a worked example from the original build
+        spec — including the exact $100/3-trade/1-win case walked through in <a href="#worked">§04</a> —
+        before a single line of it was translated into this version.</p>
+      <p>The port carries its own regression suite: <strong>36/36</strong> checks on the core staking
+        math (<code>test_masaniello.py</code>) and <strong>122/122</strong> on the planning search
+        functions (<code>test_planning.py</code>) — including the fully hand-derived edge cases: the
+        diagonal pure-vs-capped split, the exact $1-stop-loss-on-$55-remaining scenario from <a
+        href="#guardrails">§09</a> confirmed fixed, and a case where the live payout differs from the
+        average to confirm the stake actually reacts to it.</p>
+    </section>
+
+  </main>
+
+  <footer class="endnote">
+    Masaniello staking algorithm · sourced from <code>trade_manager/masaniello.py</code>,
+    <code>session.py</code>, and <code>planning.py</code>
+  </footer>
+</div>
